@@ -95,11 +95,20 @@ export function MediaView() {
 						onProgress: (progress: { progress: number }) =>
 							setProgress(progress.progress),
 					});
+					if (!processedAssets.length) throw new Error("No se pudo importar ningún archivo. Comprueba el formato y el espacio disponible.");
 					for (const asset of processedAssets) {
-						await editor.media.addMediaAsset({
+						const saved = await editor.media.addMediaAsset({
 							projectId: activeProject.metadata.id,
 							asset,
 						});
+						if (!saved) throw new Error(`No se pudo guardar ${asset.name}`);
+						if (window.matchMedia("(max-width: 1023px)").matches) {
+							const duration = saved.duration != null
+								? mediaTimeFromSeconds({ seconds: saved.duration }) : DEFAULT_NEW_ELEMENT_DURATION;
+							const element = buildElementFromMedia({mediaId: saved.id, mediaType: saved.type,
+								name: saved.name, duration, startTime: editor.timeline.getTotalDuration()});
+							editor.timeline.insertElement({element, placement: {mode: "auto", trackType: saved.type === "audio" ? "audio" : "video"}});
+						}
 					}
 					return {
 						uploadedCount: processedAssets.length,

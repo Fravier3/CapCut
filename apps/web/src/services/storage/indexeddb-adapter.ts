@@ -59,9 +59,12 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 		const store = transaction.objectStore(this.storeName);
 
 		return new Promise((resolve, reject) => {
+			// A successful request can still be followed by a transaction abort.
+			transaction.oncomplete = () => { db.close(); resolve(); };
+			transaction.onabort = () => { db.close(); reject(transaction.error ?? new Error("No se pudo guardar el archivo")); };
+			transaction.onerror = () => reject(transaction.error);
 			const request = store.put({ id: key, ...value });
 			request.onerror = () => reject(request.error);
-			request.onsuccess = () => resolve();
 		});
 	}
 

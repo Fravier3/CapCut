@@ -21,6 +21,8 @@ jobs:
       - run: npm ci --legacy-peer-deps --workspaces=false
         working-directory: mobile
       - run: ln -s ../../mobile/node_modules apps/web/node_modules
+      - run: node tests/storage-import.mjs
+        working-directory: mobile
       - run: npm run build
         working-directory: mobile
       - uses: actions/upload-pages-artifact@v3

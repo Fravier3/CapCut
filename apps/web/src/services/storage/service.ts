@@ -3,6 +3,7 @@ import { getProjectDurationFromScenes } from "@/timeline/scenes";
 import type { MediaAsset } from "@/media/types";
 import { IndexedDBAdapter } from "./indexeddb-adapter";
 import { OPFSAdapter } from "./opfs-adapter";
+import { MediaFileAdapter } from "./media-file-adapter";
 import {
 	type StorageCapacityCheckResult,
 	StorageQuotaExceededError,
@@ -97,7 +98,7 @@ class StorageService {
 			version: this.config.version,
 		});
 
-		const mediaAssetsAdapter = new OPFSAdapter(`media-files-${projectId}`);
+		const mediaAssetsAdapter = new MediaFileAdapter(`media-files-${projectId}`);
 
 		return { mediaMetadataAdapter, mediaAssetsAdapter };
 	}
@@ -299,12 +300,15 @@ class StorageService {
 			name: mediaAsset.name,
 			type: mediaAsset.type,
 			size: mediaAsset.file.size,
+			mimeType: mediaAsset.file.type,
 			lastModified: mediaAsset.file.lastModified,
 			width: mediaAsset.width,
 			height: mediaAsset.height,
 			duration: mediaAsset.duration,
 			thumbnailUrl: mediaAsset.thumbnailUrl,
 			ephemeral: mediaAsset.ephemeral,
+			fps: mediaAsset.fps,
+			hasAudio: mediaAsset.hasAudio,
 		};
 
 		try {
@@ -371,13 +375,15 @@ class StorageService {
 			id: metadata.id,
 			name: metadata.name,
 			type: metadata.type,
-			file,
+			file: new File([file], metadata.name, {type: metadata.mimeType || file.type, lastModified: metadata.lastModified}),
 			url,
 			width: metadata.width,
 			height: metadata.height,
 			duration: metadata.duration,
 			thumbnailUrl: metadata.thumbnailUrl,
 			ephemeral: metadata.ephemeral,
+			fps: metadata.fps,
+			hasAudio: metadata.hasAudio,
 		};
 	}
 

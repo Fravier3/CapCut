@@ -20,7 +20,7 @@ export class MediaManager {
 	}: {
 		projectId: string;
 		asset: Omit<MediaAsset, "id">;
-	}): Promise<MediaAsset | null> {
+	}): Promise<MediaAsset> {
 		const newAsset: MediaAsset = {
 			...asset,
 			id: generateUUID(),
@@ -31,9 +31,11 @@ export class MediaManager {
 
 		try {
 			await storageService.saveMediaAsset({ projectId, mediaAsset: newAsset });
-			this.editor.project.ratchetFpsForImportedMedia({
-				importedAssets: [newAsset],
-			});
+			try {
+				this.editor.project.ratchetFpsForImportedMedia({ importedAssets: [newAsset] });
+			} catch (error) {
+				console.warn("Could not adjust project frame rate for imported media", error);
+			}
 			return newAsset;
 		} catch (error) {
 			console.error("Failed to save media asset:", error);
@@ -46,7 +48,7 @@ export class MediaManager {
 				});
 			}
 
-			return null;
+			throw new Error(`No se pudo guardar ${asset.name}. Comprueba el espacio disponible y vuelve a importarlo.`, { cause: error });
 		}
 	}
 

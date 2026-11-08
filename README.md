@@ -17,3 +17,5 @@ El editor conserva el motor Rust/WASM de OpenCut. Se añadió renderizado Canvas
 Verificación: compilación local, inicio/editor en navegador con marcos 390×844 y 360×800, insets simulados de 59/34 px, creación de proyecto, inserción de texto y exportación. Safari/iPhone y Android físicos pendientes de validación.
 
 Procedencia y licencia: OpenCut Classic, https://github.com/opencut-app/opencut-classic, MIT. Se conserva LICENSE. Identidad de instalación estable: `/CapCut/`.
+
+Corrección 1.0.1: almacenamiento alternativo IndexedDB si falla la escritura OPFS; confirmación solo tras guardado real; clips importados se añaden al montaje móvil. Pruebas de regresión: `cd mobile && node tests/storage-import.mjs`.

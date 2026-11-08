@@ -27,24 +27,26 @@ export async function showMediaUploadToast<T extends MediaUploadToastResult>({
 	const run = typeof promise === "function" ? promise : () => promise;
 	const toastPromise = toast.promise(async () => {
 		await waitForNextPaint();
-		return run();
+		const result = await run();
+		if (result.uploadedCount < 1) throw new Error("No se importó ningún archivo");
+		return result;
 	}, {
-		loading: `Uploading ${getAssetLabel({ count: filesCount })}...`,
+		loading: `Importando ${filesCount === 1 ? "archivo" : "archivos"}…`,
 		success: ({ uploadedCount, assetNames }) => {
 			if (uploadedCount === 1) {
 				const assetName = assetNames?.[0];
 				return assetName
-					? `${assetName} has been uploaded`
-					: "1 media asset has been uploaded";
+					? `${assetName} se importó correctamente`
+					: "Archivo importado correctamente";
 			}
 
 			if (uploadedCount > 1) {
-				return `${uploadedCount} media assets have been uploaded`;
+				return `${uploadedCount} archivos importados correctamente`;
 			}
 
 			return "No media assets were uploaded";
 		},
-		error: `Failed to upload ${getAssetLabel({ count: filesCount })}`,
+		error: (error) => error instanceof Error ? error.message : "No se pudo importar el archivo",
 	});
 
 	return toastPromise.unwrap();

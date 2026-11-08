@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import { build } from 'esbuild';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const temp = await mkdtemp(join(tmpdir(),'capcut-import-'));
+try {
+ await build({entryPoints:['../apps/web/src/services/storage/media-file-adapter.ts','../apps/web/src/services/storage/indexeddb-adapter.ts'],outdir:temp,bundle:true,platform:'node',format:'esm',outExtension:{'.js':'.mjs'}});
+ const {MediaFileAdapter}=await import(pathToFileURL(join(temp,'media-file-adapter.mjs')));
+ const {IndexedDBAdapter}=await import(pathToFileURL(join(temp,'indexeddb-adapter.mjs')));
+ const records=new Map();
+ const fallback={get:async k=>records.get(k)??null,set:async({key,value})=>records.set(key,value),remove:async k=>records.delete(k),list:async()=>[...records.keys()],clear:async()=>records.clear()};
+ const unavailable={get:async()=>null,set:async()=>{throw new TypeError('createWritable is not a function')},remove:async()=>{},list:async()=>[],clear:async()=>{}};
+ const adapter=new MediaFileAdapter('test');adapter.primary=unavailable;adapter.fallback=fallback;
+ const original=new File(['video-bytes'],'IMG_4815.mov',{type:'video/quicktime',lastModified:12345});
+ await adapter.set({key:'clip',value:original});
+ const reopened=new MediaFileAdapter('test');reopened.primary=unavailable;reopened.fallback=fallback;
+ const restored=await reopened.get('clip');
+ assert.equal(await restored.text(),'video-bytes');assert.equal(restored.name,original.name);assert.equal(restored.type,original.type);assert.equal(restored.lastModified,12345);
+ console.log('PASS: unsupported OPFS write falls back and survives reopening with name, MIME and bytes');
+ const quota=new DOMException('No space','QuotaExceededError');adapter.primary={...unavailable,set:async()=>{throw quota}};
+ await assert.rejects(adapter.set({key:'quota',value:original}),e=>e===quota);assert.equal(records.has('quota'),false);
+ console.log('PASS: quota failure remains an error');
+ adapter.primary={...unavailable,set:async()=>{}};await adapter.set({key:'clip',value:original});assert.equal(records.has('clip'),false);
+ adapter.primary={...unavailable,get:async()=>original};assert.equal(await adapter.get('legacy'),original);
+ console.log('PASS: existing OPFS media remains readable and successful writes remove stale fallback');
+ const transaction={error:null,objectStore:()=>({put:()=>({})})};const db={transaction:()=>transaction,close:()=>{}};
+ globalThis.indexedDB={open:()=>{const request={result:db};queueMicrotask(()=>request.onsuccess());return request}};
+ const idb=new IndexedDBAdapter({dbName:'test',storeName:'files'});let settled=false;
+ const write=idb.set({key:'clip',value:{blob:original}}).finally(()=>{settled=true});
+ await new Promise(r=>setImmediate(r));assert.equal(settled,false);
+ transaction.error=new DOMException('Disk write failed','AbortError');transaction.onabort();await assert.rejects(write,/Disk write failed/);
+ console.log('PASS: IndexedDB transaction abort cannot report success');
+} finally {await rm(temp,{recursive:true,force:true})}

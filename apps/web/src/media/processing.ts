@@ -156,9 +156,7 @@ export async function processMediaAssets({
 							? error.message
 							: "Could not process video";
 
-					toast.error(`Couldn't process ${file.name}`, {
-						description: message,
-					});
+					throw new Error(message);
 				}
 			} else if (fileType === "audio") {
 				duration = await getMediaDuration({ file });
@@ -186,7 +184,7 @@ export async function processMediaAssets({
 			}
 		} catch (error) {
 			console.error("Error processing file:", file.name, error);
-			toast.error(`Failed to process ${file.name}`);
+			toast.error(`No se pudo importar ${file.name}`, {description: error instanceof Error ? error.message : undefined});
 			URL.revokeObjectURL(url);
 		}
 	}
