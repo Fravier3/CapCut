@@ -1,8 +1,28 @@
 import {readdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
-const files=await readdir('dist/assets');const html=await readFile('dist/index.html','utf8');const version=createHash('sha256').update(html).digest('hex').slice(0,12);const urls=['/CapCut/','/CapCut/index.html','/CapCut/manifest.webmanifest','/CapCut/icons/logo.svg','/CapCut/icons/apple-touch-icon.png','/CapCut/icons/icon-192.png','/CapCut/icons/icon-512.png',...files.filter(f=>!f.startsWith('ort-')&&!f.startsWith('worker-')).map(f=>'/CapCut/assets/'+f)];
-await writeFile('dist/sw.js',`const CACHE='capcut-fj-${version}';const URLS=${JSON.stringify(urls)};self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting()});self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('capcut-fj-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{const u=new URL(e.request.url);if(e.request.method!=='GET'||u.origin!==location.origin||!u.pathname.startsWith('/CapCut/'))return;if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).catch(()=>caches.match('/CapCut/index.html')));return}e.respondWith(caches.match(e.request).then(c=>c||fetch(e.request)))});`);
+const files=await readdir('dist/assets');
+const html=await readFile('dist/index.html','utf8');
+const version=createHash('sha256').update(html).digest('hex').slice(0,12);
+const urls=['/CapCut/','/CapCut/index.html','/CapCut/manifest.webmanifest','/CapCut/icons/logo.svg','/CapCut/icons/apple-touch-icon.png','/CapCut/icons/icon-192.png','/CapCut/icons/icon-512.png',...files.filter(f=>!f.startsWith('ort-')&&!f.startsWith('worker-')).map(f=>'/CapCut/assets/'+f)];
+await writeFile('dist/sw.js',`const CACHE='capcut-fj-${version}';const URLS=${JSON.stringify(urls)};
+self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(URLS))));
+self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting()});
+self.addEventListener('activate',e=>e.waitUntil((async()=>{
+ const clients=await self.clients.matchAll({includeUncontrolled:true});
+ if(clients.length<=1){const keys=await caches.keys();await Promise.all(keys.filter(k=>k.startsWith('capcut-fj-')&&k!==CACHE).slice(0,-2).map(k=>caches.delete(k)))}
+ await self.clients.claim();
+})()));
+self.addEventListener('fetch',e=>{
+ const u=new URL(e.request.url);
+ if(e.request.method!=='GET'||u.origin!==location.origin||!u.pathname.startsWith('/CapCut/'))return;
+ if(e.request.mode==='navigate'){
+  e.respondWith(fetch(e.request).catch(()=>caches.open(CACHE).then(c=>c.match('/CapCut/index.html'))));return;
+ }
+ e.respondWith(caches.open(CACHE).then(async c=>(await c.match(e.request))||(u.pathname.startsWith('/CapCut/assets/')?await caches.match(e.request):null)||fetch(e.request)));
+});`);
 await writeFile('dist/.nojekyll','');
 if(html.includes('src="/src/')||files.some(f=>f.endsWith('.map')))throw new Error('Invalid public artifact');
 for(const name of ['icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png','manifest.webmanifest'])await readFile('dist/'+name);
+const appScripts=files.filter(f=>f.endsWith('.js')&&!f.startsWith('worker-'));
+if(appScripts.length!==1)throw new Error('Expected one self-contained application module');
 console.log('PWA build verified',version);

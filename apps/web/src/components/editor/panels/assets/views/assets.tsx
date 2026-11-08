@@ -30,6 +30,7 @@ import { mediaTimeFromSeconds, type MediaTime } from "@/wasm";
 import { useEditor } from "@/editor/use-editor";
 import { useFileUpload } from "@/media/use-file-upload";
 import { invokeAction } from "@/actions";
+import {getImportStartTime} from "@/media/import-placement";
 import { processMediaAssets } from "@/media/processing";
 import { showMediaUploadToast } from "@/media/upload-toast";
 import {
@@ -59,7 +60,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 
-export function MediaView() {
+export function MediaView({kind = 'all'}: {kind?: 'all' | 'audio'} = {}) {
 	const editor = useEditor();
 	const mediaFiles = useEditor((e) => e.media.getAssets());
 	const activeProject = useEditor((e) => e.project.getActive());
@@ -107,11 +108,14 @@ export function MediaView() {
 						if (window.matchMedia("(max-width: 1023px)").matches) {
 							const duration = saved.duration != null
 								? mediaTimeFromSeconds({ seconds: saved.duration }) : DEFAULT_NEW_ELEMENT_DURATION;
+							const startTime=getImportStartTime({type:saved.type,tracks:editor.scenes.getActiveScene().tracks,cursor:editor.playback.getCurrentTime()});
 							const element = buildElementFromMedia({mediaId: saved.id, mediaType: saved.type,
-								name: saved.name, duration, startTime: editor.timeline.getTotalDuration()});
+								name: saved.name, duration, startTime});
 							editor.timeline.insertElement({element, placement: {mode: "auto", trackType: saved.type === "audio" ? "audio" : "video"}});
+							editor.playback.seek({time:startTime});
 						}
 					}
+					await editor.project.saveCurrentProject();
 					return {
 						uploadedCount: processedAssets.length,
 						assetNames: processedAssets.map((asset) => asset.name),
@@ -129,7 +133,7 @@ export function MediaView() {
 
 	const { isDragOver, dragProps, openFilePicker, fileInputProps } =
 		useFileUpload({
-			accept: "image/*,video/*,audio/*",
+			accept: kind === 'audio' ? 'audio/*,.mp3,.m4a,.aac,.wav,.ogg,.flac,.aiff,.aif,.opus,.caf,.weba' : 'image/*,video/*,audio/*',
 			multiple: true,
 			onFilesSelected: (files) => processFiles({ files }),
 		});
@@ -161,7 +165,7 @@ export function MediaView() {
 	};
 
 	const filteredMediaItems = useMemo(() => {
-		const filtered = mediaFiles.filter((item) => !item.ephemeral);
+		const filtered = mediaFiles.filter((item) => !item.ephemeral && (kind !== "audio" || item.type === "audio"));
 
 		filtered.sort((a, b) => {
 			let valueA: string | number;
@@ -194,7 +198,7 @@ export function MediaView() {
 		});
 
 		return filtered;
-	}, [mediaFiles, mediaSortBy, mediaSortOrder]);
+	}, [mediaFiles, mediaSortBy, mediaSortOrder, kind]);
 	const orderedMediaIds = useMemo(() => {
 		return filteredMediaItems.map((item) => item.id);
 	}, [filteredMediaItems]);
@@ -205,7 +209,7 @@ export function MediaView() {
 			{importError && <div role="alert" className="m-2 rounded-lg bg-red-500/10 p-3 text-sm break-words text-red-400"><strong>No se pudo importar</strong><p>{importError}</p></div>}
 
 			<PanelView
-				title="Assets"
+				title={kind === 'audio' ? 'Mis audios' : 'Medios'}
 				actions={
 					<MediaActions
 						mediaViewMode={mediaViewMode}
@@ -215,6 +219,7 @@ export function MediaView() {
 						sortOrder={mediaSortOrder}
 						onSort={handleSort}
 						onImport={openFilePicker}
+						importLabel={kind === "audio" ? "Importar audio" : "Importar"}
 					/>
 				}
 				className={cn(isDragOver && "bg-accent/30")}
@@ -306,7 +311,7 @@ function MediaAssetDraggable({
 			}}
 			shouldShowPlusOnDrag={false}
 			onAddToTimeline={({ currentTime }) =>
-				addElementAtTime({ asset: item, startTime: window.matchMedia("(max-width: 1023px)").matches ? editor.timeline.getTotalDuration() : currentTime })
+				addElementAtTime({ asset: item, startTime: window.matchMedia("(max-width: 1023px)").matches ? getImportStartTime({type:item.type,tracks:editor.scenes.getActiveScene().tracks,cursor:currentTime}) : currentTime })
 			}
 			variant={variant}
 			isRounded={isRounded}
@@ -527,6 +532,7 @@ function MediaActions({
 	sortOrder,
 	onSort,
 	onImport,
+	importLabel = "Importar",
 }: {
 	mediaViewMode: MediaViewMode;
 	setMediaViewMode: (mode: MediaViewMode) => void;
@@ -535,6 +541,7 @@ function MediaActions({
 	sortOrder: MediaSortOrder;
 	onSort: ({ key }: { key: MediaSortKey }) => void;
 	onImport: () => void;
+	importLabel?: string;
 }) {
 	return (
 		<div className="flex gap-1.5">
@@ -626,7 +633,7 @@ function MediaActions({
 				className="items-center justify-center gap-1.5"
 			>
 				<HugeiconsIcon icon={CloudUploadIcon} />
-				Import
+				{importLabel}
 			</Button>
 		</div>
 	);

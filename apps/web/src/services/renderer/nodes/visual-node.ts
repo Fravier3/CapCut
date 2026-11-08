@@ -5,6 +5,8 @@ import type { BlendMode, Transform } from "@/rendering";
 import type { RetimeConfig, VisualElement } from "@/timeline";
 
 export interface VisualNodeParams {
+	transitionIn?: import("@/transitions/resolve").ClipTransition;
+	transitionOut?: import("@/transitions/resolve").ClipTransition;
 	duration: number;
 	timeOffset: number;
 	trimStart: number;

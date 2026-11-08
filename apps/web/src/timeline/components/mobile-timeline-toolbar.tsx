@@ -10,6 +10,8 @@ export function MobileTimelineToolbar(){
  const editor=useEditor();
  const {selectedElements}=useElementSelection();
  const currentTime=useEditor(e=>e.playback.getCurrentTime());
+ const fps=useEditor(e=>e.project.getActiveOrNull()?.settings.fps);
+ const frameStep=fps?fps.denominator/fps.numerator:1/30;
  const scene=useEditor(e=>e.scenes.getActiveSceneOrNull());
  const selected=selectedElements.length===1?editor.timeline.getElementsWithTracks({elements:selectedElements})[0]:null;
  const [dialog,setDialog]=useState<'trim'|'move'|null>(null),[position,setPosition]=useState('0');
@@ -44,7 +46,9 @@ export function MobileTimelineToolbar(){
    <h2>{dialog==='trim'?'Recortar clip':'Mover clip'}</h2>
    {dialog==='trim'?<>
     <p>Coloca el punto de corte y elige qué parte conservar. También puedes arrastrar los extremos del clip.</p>
-    <label>Punto de corte: {cursor.toFixed(2)} s<input aria-label="Punto de corte" type="range" min={start} max={start+duration} step="0.01" value={Math.max(start,Math.min(start+duration,cursor))} onChange={e=>editor.playback.seek({time:mediaTimeFromSeconds({seconds:Number(e.target.value)})})}/></label>
+    <label>Punto de corte: {cursor.toFixed(2)} s<input aria-label="Punto de corte" type="range" min={start} max={start+duration} step={frameStep} value={Math.max(start,Math.min(start+duration,cursor))} onChange={e=>editor.playback.seek({time:mediaTimeFromSeconds({seconds:Number(e.target.value)})})}/></label>
+    <div className="move-step-buttons"><button onClick={()=>editor.playback.seek({time:mediaTimeFromSeconds({seconds:Math.max(start,cursor-frameStep)})})}>−1 fotograma</button><button onClick={()=>editor.playback.seek({time:mediaTimeFromSeconds({seconds:Math.min(start+duration,cursor+frameStep)})})}>+1 fotograma</button></div>
+    <label>Corte exacto (segundos)<input aria-label="Corte exacto en segundos" type="number" inputMode="decimal" min={start} max={start+duration} step={frameStep} value={Number(cursor.toFixed(3))} onChange={e=>{const seconds=Number(e.target.value);if(Number.isFinite(seconds))editor.playback.seek({time:mediaTimeFromSeconds({seconds:Math.max(start,Math.min(start+duration,seconds))})})}}/></label>
     <button onClick={()=>split('right')}>Eliminar lo que queda antes</button><button onClick={()=>split('left')}>Eliminar lo que queda después</button><button onClick={()=>split('both')}>Dividir en dos clips</button>
    </>:<>
     <p>Arrastra el clip horizontalmente o indica cuándo debe comenzar.</p>

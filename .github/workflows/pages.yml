@@ -25,7 +25,11 @@ jobs:
         working-directory: mobile
       - run: node tests/timeline-mobile.mjs
         working-directory: mobile
+      - run: node tests/mobile-regressions.mjs
+        working-directory: mobile
       - run: npm run build
+        working-directory: mobile
+      - run: node tests/pwa-update.mjs
         working-directory: mobile
       - uses: actions/upload-pages-artifact@v3
         with:

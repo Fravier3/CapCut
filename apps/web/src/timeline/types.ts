@@ -103,6 +103,8 @@ export interface LibraryAudioElement extends BaseAudioElement {
 export type AudioElement = UploadAudioElement | LibraryAudioElement;
 
 interface BaseTimelineElement {
+	transitionIn?: import("@/transitions/resolve").ClipTransition;
+	transitionOut?: import("@/transitions/resolve").ClipTransition;
 	id: string;
 	name: string;
 	duration: MediaTime;

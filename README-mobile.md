@@ -27,3 +27,7 @@ Corrección 1.0.3: desplazamiento vertical de pistas con el dedo desde clips/eti
 Versión 1.0.4: barra móvil visible con Dividir, Recortar, Mover, Eliminar y Deshacer; recorte con cursor y extremos, posición en segundos con validación de colisiones, zoom accesible y cierre de herramientas al insertar un clip.
 
 En teléfono, el botón + de un medio lo añade al final del montaje en vez de superponerlo al cursor; selección de clips revela su pista y su posición horizontal.
+
+Versión 1.1.0: selector específico de audio y detección por extensión; gestos encaminados al controlador real de la línea de tiempo; ajuste Todo y recorte por fotograma/segundos; navegación móvil con Transiciones visible. Fundido a negro, deslizar y zoom funcionan en vista previa y exportación. Los errores de render liberan el bloqueo y los lienzos de video reciclados siempre actualizan su textura. Inicio/editor se incluyen en un módulo único; las actualizaciones PWA guardan antes de recargar y conservan recursos de pestañas anteriores. Logo vectorial basado en la geometría de referencia de Wikimedia (Capcut-icon.svg).
+
+Pruebas adicionales: `cd mobile && node tests/timeline-mobile.mjs && node tests/mobile-regressions.mjs`; `qa.html` es un marco de desarrollo y no se publica.

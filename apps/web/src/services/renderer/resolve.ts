@@ -1,3 +1,4 @@
+import {resolveClipTransition} from "@/transitions/resolve";
 import { mediaTimeToSeconds, roundMediaTime } from "@/wasm";
 import { getElementLocalTime } from "@/animation";
 import { resolveEffectParamsAtTime } from "@/animation/effect-param-channel";
@@ -149,16 +150,20 @@ function resolveVisualState({
 		elementStartTime: params.timeOffset,
 		elementDuration: params.duration,
 	});
-	const transform = resolveTransformAtTime({
+	let transform = resolveTransformAtTime({
 		baseTransform: params.transform,
 		animations: params.animations,
 		localTime,
 	});
-	const opacity = resolveOpacityAtTime({
+	let opacity = resolveOpacityAtTime({
 		baseOpacity: params.opacity,
 		animations: params.animations,
 		localTime,
 	});
+	const transition=resolveClipTransition({entry:params.transitionIn,exit:params.transitionOut,
+		time:mediaTimeToSeconds({time:roundMediaTime({time:clipTime})}),duration:mediaTimeToSeconds({time:roundMediaTime({time:params.duration})}),width:context.renderer.width});
+	opacity*=transition.opacity;
+	transform={...transform,position:{...transform.position,x:transform.position.x+transition.x},scaleX:transform.scaleX*transition.scale,scaleY:transform.scaleY*transition.scale};
 	const containScale = Math.min(
 		context.renderer.width / sourceWidth,
 		context.renderer.height / sourceHeight,

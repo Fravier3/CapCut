@@ -14,9 +14,9 @@ try{
  assert.equal(revealTrackTop({top:50,height:80,scrollTop:20,viewportHeight:150,maxScrollTop:1400}),20);
  console.log('PASS: track reveal reaches tracks beyond 800px and preserves visible rows');
  const listeners={},events=[];let menu=false;
- globalThis.window={dispatchEvent:e=>events.push(e.type)};
+ globalThis.window={dispatchEvent:()=>{throw new Error('Los eventos de arrastre deben pasar por document')}};
  globalThis.MouseEvent=class {constructor(type,init){this.type=type;Object.assign(this,init)}};
- globalThis.document={addEventListener:(type,fn)=>listeners[type]=fn,querySelector:()=>menu?{}:null};
+ globalThis.document={addEventListener:(type,fn)=>listeners[type]=fn,dispatchEvent:e=>{events.push(e.type);listeners[e.type]?.(e);return true},querySelector:()=>menu?{}:null};
  const target={closest:q=>q==='[data-touch-editable]'?{getAttribute:()=> 'clip'}:{},dispatchEvent:e=>events.push(e.type)};
  const event=(x,y)=>({target,touches:[{clientX:x,clientY:y}],preventDefault(){this.prevented=true}});
  installTimelineTouch();

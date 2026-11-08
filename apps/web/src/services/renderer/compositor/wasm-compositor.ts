@@ -1,3 +1,4 @@
+import {canReuseExternalTexture} from "./texture-cache-policy";
 import {isGpuAvailable} from "../gpu-renderer";
 import {CanvasCompositor} from "./canvas-compositor";
 import {
@@ -100,12 +101,7 @@ class WasmCompositor {
 
 	private syncExternalTexture(texture: ExternalTextureDescriptor) {
 		const previous = this.cache.get(texture.id);
-		if (
-			previous?.kind === "external" &&
-			previous.source === texture.source &&
-			previous.width === texture.width &&
-			previous.height === texture.height
-		) {
+		if (canReuseExternalTexture(previous, texture)) {
 			incrementCounter({ name: "textureCacheHit" });
 			return;
 		}

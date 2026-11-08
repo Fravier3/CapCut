@@ -90,6 +90,8 @@ export function useFileUpload({
 		isDragOver,
 		openFilePicker,
 		fileInputProps: {
+			accept,
+			multiple,
 			ref: inputRef,
 			type: "file",
 			style: { display: "none" },

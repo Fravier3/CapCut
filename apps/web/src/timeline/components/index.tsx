@@ -30,7 +30,7 @@ import {
 	type ReactNode,
 } from "react";
 import { useContainerSize } from "@/hooks/use-container-size";
-import type { MediaTime } from "@/wasm";
+import { TICKS_PER_SECOND, type MediaTime } from "@/wasm";
 import type { ElementDragView, DropTarget } from "@/timeline";
 import { TimelineTrackContent } from "./timeline-track";
 import { TimelinePlayhead } from "./timeline-playhead";
@@ -307,6 +307,21 @@ export function Timeline() {
 	}, [syncFollowers]);
 	const selectionKey = selectedElements.map(el => `${el.trackId}:${el.elementId}`).join("|");
 	const sceneId = scene?.id;
+	const fittedSceneRef = useRef<string | null>(null);
+	const fitTimeline = useCallback(() => {
+		if (timelineDuration <= 0) return;
+		const width = tracksScrollRef.current?.clientWidth ?? tracksViewportWidth;
+		const seconds = timelineDuration / TICKS_PER_SECOND;
+		setZoomLevel(Math.max(minZoomLevel, Math.min(100, width * .82 / (seconds * 50))));
+		if (tracksScrollRef.current) tracksScrollRef.current.scrollLeft = 0;
+		syncFollowers();
+	}, [timelineDuration, tracksViewportWidth, minZoomLevel, setZoomLevel, syncFollowers]);
+	useEffect(() => {
+		if (!sceneId || timelineDuration <= 0 || !tracksViewportWidth || fittedSceneRef.current === sceneId || !window.matchMedia('(max-width: 1023px)').matches) return;
+		fittedSceneRef.current = sceneId;
+		fitTimeline();
+	}, [sceneId,timelineDuration,tracksViewportWidth,fitTimeline]);
+
 	useEffect(() => {
 		const id = selectedElements[0]?.trackId ?? tracks.find(track => track.elements.length > 0)?.id;
 		if (!id) return;
@@ -472,6 +487,7 @@ export function Timeline() {
 			<div className="timeline-track-navigation" aria-label="Navegar pistas">
 				<button aria-label="Pista anterior" disabled={visibleTrackIndex === 0} onClick={() => revealTrack(tracks[visibleTrackIndex - 1].id)}>↑</button>
 				<button aria-label="Alejar línea de tiempo" onClick={() => setZoomLevel(Math.max(minZoomLevel,zoomLevel/1.3))}>−</button>
+				<button className="timeline-fit-button" aria-label="Mostrar todo el montaje" onClick={fitTimeline}>Todo</button>
 				<select aria-label="Ir a pista" value={tracks[visibleTrackIndex]?.id ?? ""} onChange={event => revealTrack(event.target.value)}>
 					{tracks.map((track,index) => <option key={track.id} value={track.id}>Pista {index+1} · {track.type === "audio" ? "Audio" : track.type === "text" ? "Texto" : "Video"} · {track.elements.length} clips</option>)}
 				</select>
@@ -680,7 +696,7 @@ function TrackLabelsPanel({
 
 	return (
 		<div
-			className="flex shrink-0 flex-col border-r"
+			className="timeline-labels-panel flex shrink-0 flex-col border-r"
 			style={{ width: `${TIMELINE_TRACK_LABELS_COLUMN_WIDTH_PX}px` }}
 		>
 			<div

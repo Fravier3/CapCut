@@ -128,16 +128,7 @@ function ExportPopover({
 			return;
 		}
 
-		if (result.success && result.buffer) {
-			downloadBuffer({
-				buffer: result.buffer,
-				filename: `${activeProject.metadata.name}${getExportFileExtension({ format })}`,
-				mimeType: getExportMimeType({ format }),
-			});
 
-			editor.project.clearExportState();
-			onOpenChange(false);
-		}
 	};
 
 	const handleCancel = () => {
@@ -146,7 +137,14 @@ function ExportPopover({
 
 	return (
 		<PopoverContent className="bg-background mr-4 flex w-80 flex-col p-0">
-			{exportResult && !exportResult.success ? (
+			{exportResult?.success && exportResult.buffer ? (
+                <div className="space-y-3 p-4">
+                    <h3 className="font-medium">Video listo</h3>
+                    <p className="text-sm text-muted-foreground">Guarda el video en Archivos o Descargas. Tu proyecto permanece en este dispositivo.</p>
+                    <Button className="w-full" onClick={() => downloadBuffer({buffer: exportResult.buffer!, filename: `${activeProject.metadata.name}${getExportFileExtension({format})}`, mimeType: getExportMimeType({format})})}><Download className="size-4" />Guardar video</Button>
+                    <Button className="w-full" variant="outline" onClick={() => {editor.project.clearExportState(); onOpenChange(false)}}>Volver al editor</Button>
+                </div>
+            ) : exportResult && !exportResult.success ? (
 				<ExportError
 					error={exportResult.error || "Unknown error occurred"}
 					onRetry={handleExport}
@@ -155,7 +153,7 @@ function ExportPopover({
 				<>
 					<div className="flex items-center justify-between p-3 border-b">
 						<h3 className="font-medium text-sm">
-							{isExporting ? "Exporting project" : "Export project"}
+							{isExporting ? "Exportando video" : "Exportar video"}
 						</h3>
 					</div>
 
@@ -169,7 +167,7 @@ function ExportPopover({
 										showTopBorder={false}
 									>
 										<SectionHeader>
-											<SectionTitle>Format</SectionTitle>
+											<SectionTitle>Formato</SectionTitle>
 										</SectionHeader>
 										<SectionContent>
 											<RadioGroup
@@ -183,13 +181,13 @@ function ExportPopover({
 												<div className="flex items-center space-x-2">
 													<RadioGroupItem value="mp4" id="mp4" />
 													<Label htmlFor="mp4">
-														MP4 (H.264) - Better compatibility
+														MP4 (H.264) - Mayor compatibilidad
 													</Label>
 												</div>
 												<div className="flex items-center space-x-2">
 													<RadioGroupItem value="webm" id="webm" />
 													<Label htmlFor="webm">
-														WebM (VP9) - Smaller file size
+														WebM (VP9) - Menor tamaño
 													</Label>
 												</div>
 											</RadioGroup>
@@ -198,7 +196,7 @@ function ExportPopover({
 
 									<Section collapsible defaultOpen={false}>
 										<SectionHeader>
-											<SectionTitle>Quality</SectionTitle>
+											<SectionTitle>Calidad</SectionTitle>
 										</SectionHeader>
 										<SectionContent>
 											<RadioGroup
@@ -211,20 +209,20 @@ function ExportPopover({
 											>
 												<div className="flex items-center space-x-2">
 													<RadioGroupItem value="low" id="low" />
-													<Label htmlFor="low">Low - Smallest file size</Label>
+													<Label htmlFor="low">Baja - Menor tamaño</Label>
 												</div>
 												<div className="flex items-center space-x-2">
 													<RadioGroupItem value="medium" id="medium" />
-													<Label htmlFor="medium">Medium - Balanced</Label>
+													<Label htmlFor="medium">Media - Equilibrada</Label>
 												</div>
 												<div className="flex items-center space-x-2">
 													<RadioGroupItem value="high" id="high" />
-													<Label htmlFor="high">High - Recommended</Label>
+													<Label htmlFor="high">Alta - Recomendada</Label>
 												</div>
 												<div className="flex items-center space-x-2">
 													<RadioGroupItem value="very_high" id="very_high" />
 													<Label htmlFor="very_high">
-														Very high - Largest file size
+														Muy alta - Mayor tamaño
 													</Label>
 												</div>
 											</RadioGroup>
@@ -245,7 +243,7 @@ function ExportPopover({
 													}
 												/>
 												<Label htmlFor="include-audio">
-													Include audio in export
+													Incluir audio
 												</Label>
 											</div>
 										</SectionContent>
@@ -255,7 +253,7 @@ function ExportPopover({
 								<div className="p-3 pt-0">
 									<Button onClick={handleExport} className="w-full gap-2">
 										<Download className="size-4" />
-										Export
+										Exportar
 									</Button>
 								</div>
 							</>
@@ -278,7 +276,7 @@ function ExportPopover({
 									className="w-full rounded-md"
 									onClick={handleCancel}
 								>
-									Cancel
+									Cancelar
 								</Button>
 							</div>
 						)}
@@ -307,7 +305,7 @@ function ExportError({
 	return (
 		<div className="space-y-4 p-3">
 			<div className="flex flex-col gap-1.5">
-				<p className="text-destructive text-sm font-medium">Export failed</p>
+				<p className="text-destructive text-sm font-medium">No se pudo exportar</p>
 				<p className="text-muted-foreground text-xs">{error}</p>
 			</div>
 

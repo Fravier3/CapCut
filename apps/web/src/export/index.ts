@@ -66,5 +66,6 @@ export function downloadBuffer({
 	document.body.appendChild(downloadLink);
 	downloadLink.click();
 	document.body.removeChild(downloadLink);
-	URL.revokeObjectURL(url);
+	// Keep the URL alive while Safari/Chrome starts reading the download.
+	setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }

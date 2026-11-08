@@ -28,5 +28,8 @@ export const getMediaTypeFromFile = ({
 		return "audio";
 	}
 
+	const extension = file.name.split('.').pop()?.toLowerCase();
+	if (extension && ['mp3','m4a','aac','wav','wave','ogg','oga','flac','aiff','aif','opus','caf','weba'].includes(extension)) return 'audio';
+	if (extension && ['mp4','mov','m4v','webm','mkv'].includes(extension)) return 'video';
 	return null;
 };

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {toast} from "sonner";
 import useDeepCompareEffect from "use-deep-compare-effect";
 import { useEditor } from "@/editor/use-editor";
 import { useRafLoop } from "@/hooks/use-raf-loop";
@@ -142,6 +143,8 @@ function PreviewCanvas({
 	const lastFrameRef = useRef(-1);
 	const lastSceneRef = useRef<RootNode | null>(null);
 	const renderingRef = useRef(false);
+	const renderRetryAfterRef = useRef(0);
+	const renderErrorNotifiedRef = useRef(false);
 	const { width: nativeWidth, height: nativeHeight } = usePreviewSize();
 	const viewportSize = useContainerSize({ containerRef: viewportRef });
 	const editor = useEditor();
@@ -183,7 +186,7 @@ function PreviewCanvas({
 	}, [renderer]);
 
 	const render = useCallback(() => {
-		if (!renderTree || renderingRef.current) return;
+		if (!renderTree || renderingRef.current || Date.now() < renderRetryAfterRef.current) return;
 
 		const renderTime = Math.min(
 			editor.playback.getCurrentTime(),
@@ -206,9 +209,19 @@ function PreviewCanvas({
 		lastFrameRef.current = frame;
 		renderer
 			.render({ node: renderTree, time: renderTime })
-			.then(() => {
-				renderingRef.current = false;
-			});
+			.then(() => { renderErrorNotifiedRef.current = false; })
+			.catch((error) => {
+				lastFrameRef.current = -1;
+				lastSceneRef.current = null;
+				renderRetryAfterRef.current = Date.now() + 500;
+				editor.playback.pause();
+				console.error("Preview frame failed", error);
+				if (!renderErrorNotifiedRef.current) {
+					renderErrorNotifiedRef.current = true;
+					toast.error("Se pausó la reproducción porque no se pudo dibujar el video", {description: error instanceof Error ? error.message : undefined});
+				}
+			})
+			.finally(() => { renderingRef.current = false; });
 	}, [renderer, renderTree, editor.playback, editor.timeline]);
 
 	useRafLoop(render);
