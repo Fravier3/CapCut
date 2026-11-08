@@ -261,6 +261,7 @@ function resolveGroupMoveForDrop({
 }): GroupMoveResult | null {
 	const newTracksFallback = () =>
 		resolveGroupMove({
+			allowMainTrackGap: typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches,
 			group,
 			tracks,
 			anchorStartTime,
@@ -278,6 +279,7 @@ function resolveGroupMoveForDrop({
 
 	return (
 		resolveGroupMove({
+			allowMainTrackGap: typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches,
 			group,
 			tracks,
 			anchorStartTime,

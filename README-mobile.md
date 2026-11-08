@@ -25,3 +25,5 @@ Corrección 1.0.2: escritura OPFS por bloques con verificación de tamaño, alte
 Corrección 1.0.3: desplazamiento vertical de pistas con el dedo desde clips/etiquetas, selector y flechas de pistas, revelar la pista seleccionada, altura completa para todas las pistas y un solo menú contextual por pulsación.
 
 Versión 1.0.4: barra móvil visible con Dividir, Recortar, Mover, Eliminar y Deshacer; recorte con cursor y extremos, posición en segundos con validación de colisiones, zoom accesible y cierre de herramientas al insertar un clip.
+
+En teléfono, el botón + de un medio lo añade al final del montaje en vez de superponerlo al cursor; selección de clips revela su pista y su posición horizontal.

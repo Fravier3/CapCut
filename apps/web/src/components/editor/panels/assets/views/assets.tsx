@@ -288,6 +288,7 @@ function MediaAssetDraggable({
 			element,
 			placement: { mode: "auto" },
 		});
+		if (window.matchMedia("(max-width: 1023px)").matches) editor.playback.seek({time:startTime});
 	};
 
 	return (
@@ -305,7 +306,7 @@ function MediaAssetDraggable({
 			}}
 			shouldShowPlusOnDrag={false}
 			onAddToTimeline={({ currentTime }) =>
-				addElementAtTime({ asset: item, startTime: currentTime })
+				addElementAtTime({ asset: item, startTime: window.matchMedia("(max-width: 1023px)").matches ? editor.timeline.getTotalDuration() : currentTime })
 			}
 			variant={variant}
 			isRounded={isRounded}

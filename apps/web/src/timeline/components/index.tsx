@@ -310,7 +310,18 @@ export function Timeline() {
 	useEffect(() => {
 		const id = selectedElements[0]?.trackId ?? tracks.find(track => track.elements.length > 0)?.id;
 		if (!id) return;
-		const frame = requestAnimationFrame(() => revealTrack(id));
+		const frame = requestAnimationFrame(() => {
+			revealTrack(id);
+			const viewport = tracksScrollRef.current;
+			const elementId = selectedElements[0]?.elementId;
+			if (!viewport || !elementId) return;
+			const element = Array.from(viewport.querySelectorAll<HTMLElement>("[data-timeline-element]")).find(el => el.dataset.timelineElement === elementId);
+			if (!element) return;
+			const rect = element.getBoundingClientRect(), bounds = viewport.getBoundingClientRect();
+			if (rect.left < bounds.left) viewport.scrollLeft += rect.left - bounds.left - 8;
+			else if (rect.right > bounds.right) viewport.scrollLeft += rect.width >= bounds.width ? rect.left - bounds.left - 8 : rect.right - bounds.right + 8;
+			syncFollowers();saveScrollPositionRef.current();
+		});
 		return () => cancelAnimationFrame(frame);
 	}, [selectionKey, sceneId, revealTrack]);
 	const visibleTrackIndex = Math.max(0, tracks.findIndex(track => track.id === visibleTrackId));

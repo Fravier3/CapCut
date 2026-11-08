@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {mkdtemp,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
-import {join} from 'node:path';
+import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 const temp=await mkdtemp(join(tmpdir(),'capcut-touch-'));
 try{
@@ -26,4 +26,17 @@ try{
  events.length=0;listeners.touchstart(event(20,20));listeners.touchend(event(20,20));assert.deepEqual(events,['mousedown','mouseup','click']);
  events.length=0;listeners.touchstart(event(20,20));menu=true;listeners.touchend(event(20,20));assert.deepEqual(events,[]);
  console.log('PASS: horizontal clip dragging and tap selection work; open menu suppresses ghost taps');
+ await build({entryPoints:['../apps/web/src/timeline/group-move/resolve-move.ts'],outfile:join(temp,'move.mjs'),bundle:true,platform:'node',format:'esm',alias:{'@':resolve('../apps/web/src')},plugins:[{name:'time-units',setup(b){b.onResolve({filter:/^@\/wasm$/},()=>({path:'time',namespace:'time'}));b.onLoad({filter:/.*/,namespace:'time'},()=>({contents:'export const ZERO_MEDIA_TIME=0;export const addMediaTime=({a,b})=>a+b;export const subMediaTime=({a,b})=>a-b;export const maxMediaTime=({a,b})=>Math.max(a,b);'}))}}]});
+ const {resolveGroupMove}=await import(pathToFileURL(join(temp,'move.mjs')));
+ const clip={id:'clip',type:'video',startTime:0,duration:1000};
+ const tracks={overlay:[],main:{id:'main',type:'video',elements:[clip]},audio:[]};
+ const member={trackId:'main',elementId:'clip',elementType:'video',duration:1000,timeOffset:0,trackSection:'main',sectionIndex:0,displayIndex:0};
+ const args={group:{anchor:member,members:[member]},tracks,anchorStartTime:2000,target:{kind:'existingTrack',anchorTargetTrackId:'main'}};
+ assert.equal(resolveGroupMove(args).moves[0].newStartTime,0);
+ assert.equal(resolveGroupMove({...args,allowMainTrackGap:true}).moves[0].newStartTime,2000);
+ assert.equal(resolveGroupMove({...args,anchorStartTime:-100,allowMainTrackGap:true}).moves[0].newStartTime,0);
+ const occupied={...tracks,main:{...tracks.main,elements:[clip,{...clip,id:'other',startTime:2200}]}};
+ assert.equal(resolveGroupMove({...args,tracks:occupied,allowMainTrackGap:true}),null);
+ console.log('PASS: mobile can move the first clip forward, clamps negative times and blocks collisions; desktop anchoring remains intact');
+
 }finally{await rm(temp,{recursive:true,force:true})}

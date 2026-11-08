@@ -26,7 +26,7 @@ export function MobileTimelineToolbar(){
   const seconds=Number(position);
   if(!Number.isFinite(seconds)||seconds<0){toast.error('Escribe una posición válida en segundos.');return}
   const group=buildMoveGroup({anchorRef:selectedElements[0],selectedElements,tracks:scene.tracks});if(!group)return;
-  const plan=resolveGroupMove({group,tracks:scene.tracks,anchorStartTime:mediaTimeFromSeconds({seconds}),target:{kind:'existingTrack',anchorTargetTrackId:selectedElements[0].trackId}});
+  const plan=resolveGroupMove({allowMainTrackGap:true,group,tracks:scene.tracks,anchorStartTime:mediaTimeFromSeconds({seconds}),target:{kind:'existingTrack',anchorTargetTrackId:selectedElements[0].trackId}});
   if(!plan){toast('Ese espacio está ocupado en esta pista. Elige otra posición.');return}
   editor.timeline.moveElements({moves:plan.moves,createTracks:plan.createTracks});setDialog(null);
  };

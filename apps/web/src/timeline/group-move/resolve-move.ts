@@ -32,6 +32,7 @@ type GroupMoveTarget =
 	  };
 
 export function resolveGroupMove({
+	allowMainTrackGap = false,
 	group,
 	tracks,
 	anchorStartTime,
@@ -41,6 +42,7 @@ export function resolveGroupMove({
 	tracks: SceneTracks;
 	anchorStartTime: MediaTime;
 	target: GroupMoveTarget;
+	allowMainTrackGap?: boolean;
 }): GroupMoveResult | null {
 	if (target.kind === "newTracks") {
 		return resolveNewTrackMove({
@@ -53,6 +55,7 @@ export function resolveGroupMove({
 	}
 
 	return resolveExistingTrackMove({
+		allowMainTrackGap,
 		group,
 		tracks,
 		anchorStartTime,
@@ -61,6 +64,7 @@ export function resolveGroupMove({
 }
 
 function resolveExistingTrackMove({
+	allowMainTrackGap,
 	group,
 	tracks,
 	anchorStartTime,
@@ -70,6 +74,7 @@ function resolveExistingTrackMove({
 	tracks: SceneTracks;
 	anchorStartTime: MediaTime;
 	anchorTargetTrackId: string;
+	allowMainTrackGap: boolean;
 }): GroupMoveResult | null {
 	const anchorTargetPlacement = getTrackPlacementById({
 		tracks,
@@ -89,6 +94,7 @@ function resolveExistingTrackMove({
 	}
 
 	const clampedAnchorStartTime = clampAnchorStartTime({
+		allowMainTrackGap,
 		group,
 		tracks,
 		anchorStartTime,
@@ -341,6 +347,7 @@ function findCompatibleTrackPlacement({
 }
 
 function clampAnchorStartTime({
+	allowMainTrackGap,
 	group,
 	tracks,
 	anchorStartTime,
@@ -350,6 +357,7 @@ function clampAnchorStartTime({
 	tracks: SceneTracks;
 	anchorStartTime: MediaTime;
 	targetTrackIdsByElementId: Map<string, string>;
+	allowMainTrackGap: boolean;
 }): MediaTime {
 	const minimumAnchorStartTime = group.members.reduce(
 		(minimumStartTime, member) =>
@@ -369,6 +377,7 @@ function clampAnchorStartTime({
 			? minimumAnchorStartTime
 			: anchorStartTime;
 
+	if (allowMainTrackGap) return clampedAnchorStartTime;
 	const memberOnMainTrack = group.members.find(
 		(member) =>
 			targetTrackIdsByElementId.get(member.elementId) === tracks.main.id,
