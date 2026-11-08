@@ -118,7 +118,7 @@ export class StorageQuotaExceededError extends Error {
 
 	constructor({ requiredBytes }: { requiredBytes: number }) {
 		super(
-			`Not enough browser storage to save a ${formatStorageBytes({ bytes: requiredBytes })} file.`,
+			`Safari o el navegador rechazó guardar el archivo de ${formatStorageBytes({ bytes: requiredBytes })} por su límite de almacenamiento. No es espacio de GitHub ni de iCloud.`,
 		);
 
 		this.name = "StorageQuotaExceededError";

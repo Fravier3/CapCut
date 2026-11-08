@@ -43,7 +43,7 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 		return new Promise((resolve, reject) => {
 			const request = store.get(key);
 			request.onerror = () => reject(request.error);
-			request.onsuccess = () => resolve(request.result || null);
+			request.onsuccess = () => { db.close(); resolve(request.result || null); };
 		});
 	}
 
@@ -76,7 +76,7 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 		return new Promise((resolve, reject) => {
 			const request = store.delete(key);
 			request.onerror = () => reject(request.error);
-			request.onsuccess = () => resolve();
+			request.onsuccess = () => { db.close(); resolve(); };
 		});
 	}
 
@@ -88,7 +88,7 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 		return new Promise((resolve, reject) => {
 			const request = store.getAllKeys();
 			request.onerror = () => reject(request.error);
-			request.onsuccess = () => resolve(request.result as string[]);
+			request.onsuccess = () => { db.close(); resolve(request.result as string[]); };
 		});
 	}
 
@@ -100,7 +100,7 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 		return new Promise((resolve, reject) => {
 			const request = store.getAll();
 			request.onerror = () => reject(request.error);
-			request.onsuccess = () => resolve(request.result || []);
+			request.onsuccess = () => { db.close(); resolve(request.result || []); };
 		});
 	}
 
@@ -112,7 +112,7 @@ export class IndexedDBAdapter<T> implements StorageAdapter<T> {
 		return new Promise((resolve, reject) => {
 			const request = store.clear();
 			request.onerror = () => reject(request.error);
-			request.onsuccess = () => resolve();
+			request.onsuccess = () => { db.close(); resolve(); };
 		});
 	}
 }

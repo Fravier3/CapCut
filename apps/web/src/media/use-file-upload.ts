@@ -4,7 +4,7 @@ import { useEditor } from "@/editor/use-editor";
 interface UseFileUploadOptions {
 	accept?: string;
 	multiple?: boolean;
-	onFilesSelected?: (files: File[]) => void;
+	onFilesSelected?: (files: File[]) => void | Promise<void>;
 }
 
 export function useFileUpload({
@@ -32,14 +32,14 @@ export function useFileUpload({
 		inputRef.current.click();
 	}
 
-	function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
-		const files = Array.from(event.target.files ?? []);
-		if (files.length > 0 && onFilesSelected) {
-			onFilesSelected(files);
-		}
-
-		if (event.target) {
-			event.target.value = "";
+	async function handleFileChange(event: React.ChangeEvent<HTMLInputElement>) {
+		const input = event.currentTarget;
+		const files = Array.from(input.files ?? []);
+		try {
+			if (files.length > 0 && onFilesSelected) await onFilesSelected(files);
+		} finally {
+			// Keep the Photos selection alive until reading and saving have finished.
+			input.value = "";
 		}
 	}
 

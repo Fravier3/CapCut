@@ -91,6 +91,7 @@ export async function processMediaAssets({
 }): Promise<ProcessedMediaAsset[]> {
 	const fileArray = Array.from(files);
 	const processedAssets: ProcessedMediaAsset[] = [];
+	const failures: string[] = [];
 
 	const total = fileArray.length;
 	let completed = 0;
@@ -103,19 +104,8 @@ export async function processMediaAssets({
 			continue;
 		}
 
-		const storageCheck = await storageService.canStoreFile({
-			size: file.size,
-		});
-
-		if (!storageCheck.canStore) {
-			toast.error(`Not enough browser storage for ${file.name}`, {
-				description: getStorageLimitDescription({
-					fileSize: file.size,
-					availableBytes: storageCheck.availableBytes,
-				}),
-			});
-			continue;
-		}
+		// Storage estimates are advisory: Safari can report a smaller allowance than
+		// it grants on an actual write. Let the committed write determine capacity.
 
 		const url = URL.createObjectURL(file);
 		let thumbnailUrl: string | undefined;
@@ -184,11 +174,13 @@ export async function processMediaAssets({
 			}
 		} catch (error) {
 			console.error("Error processing file:", file.name, error);
+			failures.push(`${file.name}: ${error instanceof Error ? error.message : String(error)}`);
 			toast.error(`No se pudo importar ${file.name}`, {description: error instanceof Error ? error.message : undefined});
 			URL.revokeObjectURL(url);
 		}
 	}
 
+	if (!processedAssets.length && failures.length) throw new Error(failures.join("; "));
 	return processedAssets;
 }
 

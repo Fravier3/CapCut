@@ -38,8 +38,18 @@ export class OPFSAdapter implements StorageAdapter<File> {
 		const fileHandle = await directory.getFileHandle(key, { create: true });
 		const writable = await fileHandle.createWritable();
 
-		await writable.write(file);
-		await writable.close();
+		try {
+			for (let offset = 0; offset < file.size; offset += 1024 * 1024) {
+				await writable.write(await file.slice(offset, offset + 1024 * 1024).arrayBuffer());
+			}
+			await writable.close();
+		} catch (error) {
+			await writable.abort().catch(() => {});
+			throw error;
+		}
+		if ((await fileHandle.getFile()).size !== file.size) {
+			throw new Error("El navegador no guardó el video completo");
+		}
 	}
 
 	async remove(key: string): Promise<void> {

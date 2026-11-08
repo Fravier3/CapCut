@@ -76,6 +76,7 @@ export function MediaView() {
 
 	const [isProcessing, setIsProcessing] = useState(false);
 	const [progress, setProgress] = useState(0);
+	const [importError, setImportError] = useState<string | null>(null);
 
 	const processFiles = async ({ files }: { files: File[] }) => {
 		if (!files || files.length === 0) return;
@@ -84,6 +85,7 @@ export function MediaView() {
 			return;
 		}
 
+		setImportError(null);
 		setIsProcessing(true);
 		setProgress(0);
 		try {
@@ -95,7 +97,7 @@ export function MediaView() {
 						onProgress: (progress: { progress: number }) =>
 							setProgress(progress.progress),
 					});
-					if (!processedAssets.length) throw new Error("No se pudo importar ningún archivo. Comprueba el formato y el espacio disponible.");
+					if (!processedAssets.length) throw new Error("El navegador no pudo leer los archivos seleccionados.");
 					for (const asset of processedAssets) {
 						const saved = await editor.media.addMediaAsset({
 							projectId: activeProject.metadata.id,
@@ -118,6 +120,7 @@ export function MediaView() {
 			});
 		} catch (error) {
 			console.error("Error processing files:", error);
+			setImportError(error instanceof Error ? error.message : String(error));
 		} finally {
 			setIsProcessing(false);
 			setProgress(0);
@@ -199,6 +202,7 @@ export function MediaView() {
 	return (
 		<>
 			<input {...fileInputProps} />
+			{importError && <div role="alert" className="m-2 rounded-lg bg-red-500/10 p-3 text-sm break-words text-red-400"><strong>No se pudo importar</strong><p>{importError}</p></div>}
 
 			<PanelView
 				title="Assets"

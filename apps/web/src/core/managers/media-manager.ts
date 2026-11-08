@@ -48,7 +48,8 @@ export class MediaManager {
 				});
 			}
 
-			throw new Error(`No se pudo guardar ${asset.name}. Comprueba el espacio disponible y vuelve a importarlo.`, { cause: error });
+			const reason = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+			throw new Error(`No se pudo guardar ${asset.name}. ${reason}`, { cause: error });
 		}
 	}
 
