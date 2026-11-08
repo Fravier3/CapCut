@@ -68,6 +68,7 @@ import {
 } from "./expanded-layout";
 import { TIMELINE_HORIZONTAL_WHEEL_STEP_PX } from "./interaction";
 import { TimelineToolbar } from "./timeline-toolbar";
+import { MobileTimelineToolbar } from "./mobile-timeline-toolbar";
 import { useElementSelection } from "@/timeline/hooks/element/use-element-selection";
 import { useTimelineSeek } from "@/timeline/hooks/use-timeline-seek";
 import { useTimelineDragDrop } from "@/timeline/hooks/use-timeline-drag-drop";
@@ -450,17 +451,20 @@ export function Timeline() {
 			{...dragProps}
 			aria-label="Timeline"
 		>
-			<TimelineToolbar
+			<div className="desktop-timeline-toolbar"><TimelineToolbar
 				zoomLevel={zoomLevel}
 				minZoom={minZoomLevel}
 				setZoomLevel={({ zoom }) => setZoomLevel(zoom)}
-			/>
+			/></div>
+			<MobileTimelineToolbar/>
 
 			<div className="timeline-track-navigation" aria-label="Navegar pistas">
 				<button aria-label="Pista anterior" disabled={visibleTrackIndex === 0} onClick={() => revealTrack(tracks[visibleTrackIndex - 1].id)}>↑</button>
+				<button aria-label="Alejar línea de tiempo" onClick={() => setZoomLevel(Math.max(minZoomLevel,zoomLevel/1.3))}>−</button>
 				<select aria-label="Ir a pista" value={tracks[visibleTrackIndex]?.id ?? ""} onChange={event => revealTrack(event.target.value)}>
 					{tracks.map((track,index) => <option key={track.id} value={track.id}>Pista {index+1} · {track.type === "audio" ? "Audio" : track.type === "text" ? "Texto" : "Video"} · {track.elements.length} clips</option>)}
 				</select>
+				<button aria-label="Acercar línea de tiempo" onClick={() => setZoomLevel(Math.min(100,zoomLevel*1.3))}>+</button>
 				<button aria-label="Pista siguiente" disabled={visibleTrackIndex >= tracks.length-1} onClick={() => revealTrack(tracks[visibleTrackIndex + 1].id)}>↓</button>
 			</div>
 			<div className="relative flex min-h-0 flex-1 overflow-hidden" ref={timelineRef}>

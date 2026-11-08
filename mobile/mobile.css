@@ -26,3 +26,21 @@ html,body,#root{min-height:100%;width:100%;margin:0}body{overscroll-behavior:non
 }
 
 @media(max-height:520px) and (max-width:1023px) and (orientation:landscape){.mobile-editor.has-tools .mobile-montage{min-height:0}}
+
+.mobile-clip-toolbar{display:none}
+@media(max-width:1023px){
+.mobile-montage .desktop-timeline-toolbar{display:none}
+.mobile-montage .mobile-clip-toolbar{display:block;flex-shrink:0;border-bottom:1px solid #ffffff18}
+.mobile-clip-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:2px;padding:3px}
+.mobile-clip-actions button{display:flex;flex-direction:column;gap:2px;align-items:center;justify-content:center;min-height:44px!important;font-size:10px;touch-action:manipulation;border-radius:8px}
+.mobile-clip-actions button:not(:disabled){background:#ffffff09}
+.mobile-clip-actions button:disabled{opacity:.3}
+.mobile-clip-actions svg{width:18px;height:18px}
+.mobile-clip-toolbar p{font-size:10px;color:#a9a9b1;text-align:center;padding:0 4px 3px;margin:0}
+.mobile-montage button[aria-label$="resize handle"]{width:28px!important;min-width:28px!important;background:#ffffff20;z-index:35;border-radius:6px;touch-action:none}
+.mobile-montage button[aria-label$="resize handle"]:after{content:"";position:absolute;top:24%;bottom:24%;left:12px;width:3px;border-radius:3px;background:white}
+.mobile-editor.has-tools .mobile-montage{min-height:230px}
+.mobile-edit-dialog .move-step-buttons{display:flex;gap:8px}
+.mobile-edit-dialog input[type=range]{padding:8px 0;min-height:44px;accent-color:#17ad96}
+}
+@media(max-height:520px) and (max-width:1023px) and (orientation:landscape){.mobile-editor.has-tools .mobile-montage{min-height:0}.mobile-clip-toolbar p{display:none}}

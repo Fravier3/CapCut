@@ -23,3 +23,5 @@ Corrección 1.0.1: almacenamiento alternativo IndexedDB si falla la escritura OP
 Corrección 1.0.2: escritura OPFS por bloques con verificación de tamaño, alternativa IndexedDB con bloques de bytes sin clonar File/Blob, no rechazar importaciones por estimaciones previas, mantener selección de Fotos hasta terminar lectura y mostrar causa real de errores. Sin integración Drive.
 
 Corrección 1.0.3: desplazamiento vertical de pistas con el dedo desde clips/etiquetas, selector y flechas de pistas, revelar la pista seleccionada, altura completa para todas las pistas y un solo menú contextual por pulsación.
+
+Versión 1.0.4: barra móvil visible con Dividir, Recortar, Mover, Eliminar y Deshacer; recorte con cursor y extremos, posición en segundos con validación de colisiones, zoom accesible y cierre de herramientas al insertar un clip.
