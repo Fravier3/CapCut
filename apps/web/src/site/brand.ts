@@ -1,0 +1,1 @@
+export const SITE_URL="https://fravier3.github.io/CapCut/";export const SITE_INFO={title:"CapCut FJ",description:"Editor de video",url:SITE_URL};export const DEFAULT_LOGO_URL="/icons/logo.svg";

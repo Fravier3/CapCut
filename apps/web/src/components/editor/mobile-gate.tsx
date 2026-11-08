@@ -1,0 +1,1 @@
+import type {ReactNode} from "react"; export function MobileGate({children}:{children:ReactNode}){return <>{children}</>;}
