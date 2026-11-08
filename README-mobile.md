@@ -21,3 +21,5 @@ Procedencia y licencia: OpenCut Classic, https://github.com/opencut-app/opencut-
 Corrección 1.0.1: almacenamiento alternativo IndexedDB si falla la escritura OPFS; confirmación solo tras guardado real; clips importados se añaden al montaje móvil. Pruebas de regresión: `cd mobile && node tests/storage-import.mjs`.
 
 Corrección 1.0.2: escritura OPFS por bloques con verificación de tamaño, alternativa IndexedDB con bloques de bytes sin clonar File/Blob, no rechazar importaciones por estimaciones previas, mantener selección de Fotos hasta terminar lectura y mostrar causa real de errores. Sin integración Drive.
+
+Corrección 1.0.3: desplazamiento vertical de pistas con el dedo desde clips/etiquetas, selector y flechas de pistas, revelar la pista seleccionada, altura completa para todas las pistas y un solo menú contextual por pulsación.

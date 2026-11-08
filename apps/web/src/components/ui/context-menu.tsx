@@ -24,7 +24,15 @@ function ContextMenu({
 	);
 }
 
-const ContextMenuTrigger = ContextMenuPrimitive.Trigger;
+const ContextMenuTrigger = React.forwardRef<
+ React.ElementRef<typeof ContextMenuPrimitive.Trigger>,
+ React.ComponentPropsWithoutRef<typeof ContextMenuPrimitive.Trigger>
+>(({onPointerDown,onContextMenu,...props},ref) => (
+ <ContextMenuPrimitive.Trigger {...props} ref={ref} data-context-menu-trigger="true"
+  onPointerDown={event=>{onPointerDown?.(event);event.stopPropagation()}}
+  onContextMenu={event=>{onContextMenu?.(event);event.stopPropagation()}} />
+));
+ContextMenuTrigger.displayName = "ContextMenuTrigger";
 
 const ContextMenuGroup = ContextMenuPrimitive.Group;
 

@@ -77,7 +77,7 @@ import {
 	useBookmarkDrag,
 } from "@/timeline/bookmarks/index";
 import { useEdgeAutoScroll } from "@/timeline/hooks/use-edge-auto-scroll";
-import { useInitialScrollBottom } from "@/timeline/hooks/use-initial-scroll-bottom";
+import { revealTrackTop } from "./track-navigation";
 import { useTimelineResize } from "@/timeline/hooks/use-timeline-resize";
 import { useTimelineStore } from "@/timeline/timeline-store";
 import { useEditor } from "@/editor/use-editor";
@@ -88,7 +88,7 @@ import { invokeAction } from "@/actions";
 import { resolveTimelineElementIntersections } from "./selection-hit-testing";
 import { cn } from "@/utils/ui";
 
-const TRACKS_CONTAINER_MAX_HEIGHT = 800;
+const TRACKS_CONTAINER_MAX_HEIGHT = Number.POSITIVE_INFINITY;
 const FALLBACK_CONTAINER_WIDTH = 1000;
 const TRACKS_CONTAINER_HEIGHT = { min: 0, max: TRACKS_CONTAINER_MAX_HEIGHT };
 const TRACK_ICONS: Record<TimelineTrack["type"], ReactNode> = {
@@ -293,12 +293,26 @@ export function Timeline() {
 		};
 	}, [syncFollowers]);
 
-	useInitialScrollBottom({
-		tracksScrollRef,
-		trackLabelsScrollRef,
-		onAfterScroll: () => saveScrollPositionRef.current(),
-		isReady: tracks.length > 0,
-	});
+	const [visibleTrackId, setVisibleTrackId] = useState("");
+	const revealTrack = useCallback((trackId: string) => {
+		const viewport = tracksScrollRef.current;
+		if (!viewport) return;
+		const row = Array.from(viewport.querySelectorAll<HTMLElement>("[data-timeline-track]")).find(el => el.dataset.timelineTrack === trackId);
+		if (!row) return;
+		viewport.scrollTop = revealTrackTop({top: row.offsetTop, height: row.offsetHeight,
+			scrollTop: viewport.scrollTop, viewportHeight: viewport.clientHeight,
+			maxScrollTop: Math.max(0, viewport.scrollHeight - viewport.clientHeight)});
+		setVisibleTrackId(trackId);syncFollowers();saveScrollPositionRef.current();
+	}, [syncFollowers]);
+	const selectionKey = selectedElements.map(el => `${el.trackId}:${el.elementId}`).join("|");
+	const sceneId = scene?.id;
+	useEffect(() => {
+		const id = selectedElements[0]?.trackId ?? tracks.find(track => track.elements.length > 0)?.id;
+		if (!id) return;
+		const frame = requestAnimationFrame(() => revealTrack(id));
+		return () => cancelAnimationFrame(frame);
+	}, [selectionKey, sceneId, revealTrack]);
+	const visibleTrackIndex = Math.max(0, tracks.findIndex(track => track.id === visibleTrackId));
 
 	const { dragView, handleElementMouseDown, handleElementClick } =
 		useElementInteraction({
@@ -442,7 +456,14 @@ export function Timeline() {
 				setZoomLevel={({ zoom }) => setZoomLevel(zoom)}
 			/>
 
-			<div className="relative flex flex-1 overflow-hidden" ref={timelineRef}>
+			<div className="timeline-track-navigation" aria-label="Navegar pistas">
+				<button aria-label="Pista anterior" disabled={visibleTrackIndex === 0} onClick={() => revealTrack(tracks[visibleTrackIndex - 1].id)}>↑</button>
+				<select aria-label="Ir a pista" value={tracks[visibleTrackIndex]?.id ?? ""} onChange={event => revealTrack(event.target.value)}>
+					{tracks.map((track,index) => <option key={track.id} value={track.id}>Pista {index+1} · {track.type === "audio" ? "Audio" : track.type === "text" ? "Texto" : "Video"} · {track.elements.length} clips</option>)}
+				</select>
+				<button aria-label="Pista siguiente" disabled={visibleTrackIndex >= tracks.length-1} onClick={() => revealTrack(tracks[visibleTrackIndex + 1].id)}>↓</button>
+			</div>
+			<div className="relative flex min-h-0 flex-1 overflow-hidden" ref={timelineRef}>
 				<TrackLabelsPanel
 					trackLabelsRef={trackLabelsRef}
 					trackLabelsScrollRef={trackLabelsScrollRef}
@@ -501,10 +522,18 @@ export function Timeline() {
 					</div>
 
 					<ScrollArea
-						className="flex-1"
+						className="timeline-tracks-scroll min-h-0 flex-1"
+						data-timeline-scroll="true"
 						ref={tracksScrollRef}
 						onScroll={() => {
 							syncFollowers();
+							const viewport = tracksScrollRef.current;
+							if (viewport) {
+								const center = viewport.scrollTop + viewport.clientHeight / 2;
+								const rows = Array.from(viewport.querySelectorAll<HTMLElement>("[data-timeline-track]"));
+								const row = rows.find(row => row.offsetTop <= center && row.offsetTop + row.offsetHeight >= center);
+								if (row?.dataset.timelineTrack) setVisibleTrackId(row.dataset.timelineTrack);
+							}
 							saveScrollPosition();
 						}}
 					>
@@ -644,7 +673,11 @@ function TrackLabelsPanel({
 				style={{ height: timelineHeaderHeight || 48 }}
 			/>
 			<div ref={trackLabelsRef} className="flex-1 overflow-hidden">
-				<div ref={trackLabelsScrollRef} className="size-full overflow-hidden">
+				<div ref={trackLabelsScrollRef} className="timeline-labels-scroll size-full overflow-hidden" onScroll={(event) => {
+					const panel = event.currentTarget.closest('[aria-label="Timeline"]');
+					const viewport = panel?.querySelector<HTMLElement>('[data-timeline-scroll]');
+					if (viewport && viewport.scrollTop !== event.currentTarget.scrollTop) viewport.scrollTop = event.currentTarget.scrollTop;
+				}}>
 					{tracks.length > 0 && (
 						<div
 							className="flex flex-col"
@@ -808,6 +841,7 @@ function TimelineTrackRows({
 				<ContextMenu key={track.id}>
 					<ContextMenuTrigger asChild>
 						<div
+							data-timeline-track={track.id}
 							className={cn(
 								"absolute right-0 left-0 transition-colors",
 								tracksWithSelection.has(track.id) && SELECTED_TRACK_ROW_CLASS,

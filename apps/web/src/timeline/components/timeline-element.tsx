@@ -580,7 +580,7 @@ function ElementInner({
 						tabIndex={-1}
 						className="absolute inset-0 size-full flex flex-col"
 						onClick={(event) => onElementClick({ event, element })}
-						data-touch-editable="true" onMouseDown={(event) => onElementMouseDown({ event, element })}
+						data-touch-editable="clip" onMouseDown={(event) => onElementMouseDown({ event, element })}
 					>
 						<div
 							className={cn(
